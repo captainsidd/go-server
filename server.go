@@ -2,32 +2,104 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+	"net"
 	"log"
-
-	"github.com/gorilla/mux"
 )
 
 func main() {
-	r := mux.NewRouter()
 
 	go func () {
-			log.Fatal(http.ListenAndServe(":8080", r))
+			ln, err := net.Listen("tcp", ":7")
+			if err != nil { log.Println(err) }
+			for {
+				conn, err := ln.Accept()
+				if err != nil { log.Println(err) }
+				go handleRequest(conn, "ECHO", 7)
+			}
 	}()
 
-	r.HandleFunc("/", handleRequest)
-	r.HandleFunc("/admin", handleRequest)
-	r.HandleFunc("/root", handleRequest)
-	r.HandleFunc("/test", handleRequest)
+	go func () {
+			ln, err := net.Listen("tcp", ":20")
+			if err != nil { log.Println(err) }
+			for {
+				conn, err := ln.Accept()
+				if err != nil { log.Println(err) }
+				go handleRequest(conn, "FTP", 20)
+			}
+	}()
 
-	http.ListenAndServe(":80", r)
+	go func () {
+			ln, err := net.Listen("tcp", ":21")
+			if err != nil { log.Println(err) }
+			for {
+				conn, err := ln.Accept()
+				if err != nil { log.Println(err) }
+				go handleRequest(conn, "FTP", 21)
+			}
+	}()
+
+	go func () {
+			ln, err := net.Listen("tcp", ":22")
+			if err != nil { log.Println(err) }
+			for {
+				conn, err := ln.Accept()
+				if err != nil { log.Println(err) }
+				go handleRequest(conn, "SSH", 22)
+			}
+	}()
+
+	go func () {
+			ln, err := net.Listen("tcp", ":80")
+			if err != nil { log.Println(err) }
+			for {
+				conn, err := ln.Accept()
+				if err != nil { log.Println(err) }
+				go handleRequest(conn, "HTTP", 80)
+			}
+	}()
+
+	go func () {
+			ln, err := net.Listen("tcp", ":115")
+			if err != nil { log.Println(err) }
+			for {
+				conn, err := ln.Accept()
+				if err != nil { log.Println(err) }
+				go handleRequest(conn, "SFTP", 115)
+			}
+	}()
+
+	go func () {
+			ln, err := net.Listen("tcp", ":443")
+			if err != nil { log.Println(err) }
+			for {
+				conn, err := ln.Accept()
+				if err != nil { log.Println(err) }
+				go handleRequest(conn, "HTTPS", 443)
+			}
+	}()
+
+	go func () {
+			ln, err := net.Listen("tcp", ":8080")
+			if err != nil { log.Println(err) }
+			for {
+				conn, err := ln.Accept()
+				if err != nil { log.Println(err) }
+				go handleRequest(conn, "HTTP", 8080)
+			}
+	}()
+
+	ln, err := net.Listen("tcp", ":53")
+	if err != nil { log.Println(err) }
+	for {
+		conn, err := ln.Accept()
+		if err != nil { log.Println(err) }
+		go handleRequest(conn, "DNS", 53)
+	}
 }
 
 
-func handleRequest(w http.ResponseWriter, req *http.Request) {
-		path := req.URL.Path
-		method := req.Method
-		fmt.Println(path)
-
-		fmt.Fprintf(w, "You've made a %s request for path %s\n", method, path)
+func handleRequest(conn net.Conn, protocol string, port int) {
+		ip_addr := conn.RemoteAddr()
+		fmt.Printf("Received %s request from IP Address %s on port %d\n", protocol, ip_addr.String(), port)
+		conn.Close();
 	}
